@@ -1,0 +1,35 @@
+server:
+  address: 127.0.0.1
+  port: 8080
+spring:
+  application:
+    name: poolpilot-demo
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+poolpilot:
+  shutdown-grace-seconds: 5
+  persistence:
+    enabled: ${POOLPILOT_PERSISTENCE_ENABLED:true}
+    path: ${POOLPILOT_STATE_PATH:./data/poolpilot-state.json}
+  admin:
+    enabled: true
+    token: ${POOLPILOT_ADMIN_TOKEN:}
+  alerts:
+    interval-millis: 1000
+    cooldown-seconds: 10
+    activity-percent: 90
+    queue-percent: 80
+  pools:
+    - name: orders
+      core-size: 2
+      max-size: 4
+      queue-capacity: 16
+      slow-task-millis: 400
+    - name: reports
+      core-size: 1
+      max-size: 2
+      queue-capacity: 8
+      slow-task-millis: 700

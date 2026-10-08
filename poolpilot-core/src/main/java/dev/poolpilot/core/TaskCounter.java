@@ -1,0 +1,17 @@
+package dev.poolpilot.core;
+
+public enum TaskCounter {
+  SUBMITTED,
+  STARTED,
+  COMPLETED,
+  FAILED,
+  CANCELLED,
+  REJECTED,
+  CALLER_RUNS,
+  SLOW_TASKS,
+  OBSERVER_FAILURES,
+  RUNNING,
+  QUEUE_TIMEOUTS,
+  RUN_TIMEOUTS,
+  TRACKING_DROPPED
+}

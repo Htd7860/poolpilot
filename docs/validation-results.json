@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-08",
+  "version": "0.1.0",
+  "platform": "Windows",
+  "matrix": [
+    {
+      "java": "17",
+      "springBoot": "3.5.16",
+      "tests": 73,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "build": "workspace"
+    },
+    {
+      "java": "21",
+      "springBoot": "3.5.16",
+      "tests": 73,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "build": "source archive extraction"
+    },
+    {
+      "java": "17",
+      "springBoot": "3.4.13",
+      "tests": 73,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "build": "source archive extraction"
+    },
+    {
+      "java": "21",
+      "springBoot": "3.4.13",
+      "tests": 73,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "build": "source archive extraction"
+    }
+  ],
+  "browserChecks": 31,
+  "browser": [
+    {
+      "testedAt": "2026-10-08T08:57:12.848Z",
+      "base": "http://127.0.0.1:60365",
+      "checks": [
+        "Unauthenticated API is denied",
+        "Token mode shows only token authentication without a default credential hint",
+        "Invalid token is rejected; valid token connects without browser storage",
+        "Pool query, empty result and reset work with live data",
+        "UI configuration change is live and audited",
+        "Stale UI edit receives 409 and can explicitly refresh",
+        "Future failures are visible after demo submission",
+        "Saturation produces queue and rejection alerts",
+        "Pool row opens detailed runtime metrics and real queue trend",
+        "Alert type query and reset work with recorded events",
+        "390px mobile layout has no horizontal overflow",
+        "Prometheus exports thread-pool histogram",
+        "Pagination shows 10/10/1 rows and correct boundaries for a 21-pool test fixture",
+        "Disconnect hides data; no uncaught JavaScript errors",
+        "Application mode shows the session entry; an unauthenticated session is denied in both languages"
+      ]
+    },
+    {
+      "testedAt": "2026-10-08T08:57:23.077Z",
+      "checks": [
+        "Browser locale selects English on first visit",
+        "Login errors switch language without losing token input",
+        "Navigation and groups collapse with keyboard access; content expands and toggle labels follow language",
+        "Settings, user text and client validation survive language changes",
+        "English save creates an audit; translated details retain changed values",
+        "Rollback previews target settings, preserves bilingual input and rejects a stale version",
+        "Reviewed rollback restores the complete target and appends a new version with its source change",
+        "All operational pages, structured alerts and load results are bilingual",
+        "Collapsed desktop groups remain reachable on mobile; the navigation can be hidden and reopened",
+        "English layout has no horizontal page overflow at 390px on any view",
+        "Locale persists after reload; token is not stored; no missing translations or JavaScript errors",
+        "Unsupported locale and blocked browser storage have working fallbacks"
+      ]
+    },
+    {
+      "checks": [
+        "Named reader sees identity and disabled mutations; direct load write returns 403",
+        "Identity, role and delivery/refresh status translate in both languages",
+        "Named operator can update configuration and is recorded in audit history",
+        "Unfinished queue/run timeouts reach the API and the English alert filter"
+      ]
+    }
+  ],
+  "benchmarkCases": {
+    "windows-jdk17.json": 7,
+    "windows-jdk17-queues.json": 10,
+    "windows-jdk17-tails.json": 3
+  }
+}

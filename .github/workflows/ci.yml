@@ -1,0 +1,73 @@
+name: verify
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        java: ["17", "21"]
+        boot: ["3.4.13", "3.5.16"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - name: Verify on Linux
+        if: runner.os != 'Windows'
+        run: chmod +x mvnw && ./mvnw -B -ntp -Dspring-boot.version=${{ matrix.boot }} verify
+      - name: Verify on Windows
+        if: runner.os == 'Windows'
+        run: .\mvnw.cmd -B -ntp "-Dspring-boot.version=${{ matrix.boot }}" verify
+  browser:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      POOLPILOT_BROWSER: chromium
+      POOLPILOT_PERSISTENCE_ENABLED: "false"
+      POOLPILOT_SCREENSHOT_DIR: test-results/images
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Generate disposable admin token
+        run: echo "POOLPILOT_ADMIN_TOKEN=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - name: Package tested sources
+        run: chmod +x mvnw && ./mvnw -B -ntp -DskipTests package
+      - name: Start disposable demo
+        run: |
+          mkdir -p test-results
+          java -jar poolpilot-demo/target/poolpilot-demo-0.1.0.jar > test-results/demo.log 2>&1 &
+          echo "POOLPILOT_DEMO_PID=$!" >> "$GITHUB_ENV"
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/actuator/health; then exit 0; fi
+            sleep 1
+          done
+          cat test-results/demo.log
+          exit 1
+      - name: Console and bilingual acceptance
+        run: npm run test:browser | tee test-results/browser.log
+      - name: Stop demo
+        if: always()
+        run: if [ -n "$POOLPILOT_DEMO_PID" ]; then kill "$POOLPILOT_DEMO_PID" || true; fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: browser-acceptance
+          path: test-results/
+          retention-days: 7

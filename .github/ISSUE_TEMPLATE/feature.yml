@@ -1,0 +1,17 @@
+name: Feature request / 功能建议
+description: Describe a concrete governance use case / 描述实际治理需求
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Use case and problem / 场景与问题
+      description: What operation is difficult with the current version?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / 期望行为
+      description: Include alternatives, compatibility and resource limits if known.
+    validations:
+      required: true

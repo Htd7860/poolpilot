@@ -1,0 +1,15 @@
+{
+  "name": "poolpilot-console-checks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optional browser acceptance checks for the PoolPilot console",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test:browser": "node scripts/browser-smoke.cjs && node scripts/i18n-smoke.cjs && node scripts/governance-smoke.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}

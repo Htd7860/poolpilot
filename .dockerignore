@@ -1,0 +1,12 @@
+.git
+.idea
+.vscode
+**/src
+**/*.log
+node_modules
+dist
+docs
+work
+**/data
+**/*.lock
+**/.poolpilot-state-*.tmp

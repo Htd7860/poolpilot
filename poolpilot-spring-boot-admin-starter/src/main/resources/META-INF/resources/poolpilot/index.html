@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PoolPilot 控制台</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="i18n.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-identity">
+        <button
+          id="toggle-sidebar"
+          class="menu-toggle"
+          type="button"
+          aria-label="收起菜单"
+          aria-expanded="true"
+          aria-controls="sidebar"
+        >
+          <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+            <path
+              d="M3 5h14M3 10h14M3 15h14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+          </svg>
+        </button>
+        <a class="brand" href="#pools"
+          >Pool<span>Pilot</span><small>控制台</small></a
+        >
+      </div>
+      <div class="header-actions">
+        <select class="language-picker" aria-label="界面语言">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+        <a href="../actuator/prometheus" target="_blank" rel="noopener"
+          >Prometheus 指标</a
+        ><span class="connection"
+          ><span id="connection-dot" class="dot"></span
+          ><span id="connection-text">未连接</span></span
+        ><button id="disconnect" class="header-button" hidden>断开连接</button>
+      </div>
+    </header>
+    <aside class="sidebar" id="sidebar">
+      <div class="instance-title">POOLPILOT <span>0.1.0</span></div>
+      <nav aria-label="主导航">
+        <button
+          class="nav-group"
+          type="button"
+          aria-expanded="true"
+          aria-controls="nav-pools"
+        >
+          <span>线程池管理</span
+          ><span class="nav-arrow" aria-hidden="true">⌄</span>
+        </button>
+        <div class="nav-children" id="nav-pools">
+          <button class="nav active" data-view="pools" aria-current="page">
+            线程池列表 <span id="pool-count" class="nav-count">0</span>
+          </button>
+          <button class="nav" data-view="monitors">运行监控</button>
+        </div>
+        <button
+          class="nav-group"
+          type="button"
+          aria-expanded="true"
+          aria-controls="nav-activity"
+        >
+          <span>运行记录</span
+          ><span class="nav-arrow" aria-hidden="true">⌄</span>
+        </button>
+        <div class="nav-children" id="nav-activity">
+          <button class="nav" data-view="alerts">
+            告警记录 <span id="alert-count" class="nav-count">0</span>
+          </button>
+          <button class="nav" data-view="changes">配置变更</button>
+        </div>
+        <button
+          class="nav-group"
+          type="button"
+          aria-expanded="true"
+          aria-controls="nav-tools"
+        >
+          <span>工具</span><span class="nav-arrow" aria-hidden="true">⌄</span>
+        </button>
+        <div class="nav-children" id="nav-tools">
+          <button class="nav" data-view="load">负载测试</button>
+        </div>
+      </nav>
+    </aside>
+    <main>
+      <div class="content-panel">
+        <div class="instance-notice">
+          <span class="info-symbol" aria-hidden="true">i</span
+          ><span id="storage-status">连接后查看配置保存方式。</span>
+        </div>
+        <div class="page-heading">
+          <h1 id="view-title">线程池列表</h1>
+          <span id="sample-time" class="muted">未采样</span>
+        </div>
+        <div class="scope-bar">
+          <span>当前实例</span><strong id="instance-address"></strong>
+          <span id="account-status" hidden></span>
+        </div>
+        <p id="notice" class="notice" role="status" hidden></p>
+        <p id="runtime-status" class="muted" hidden></p>
+        <div id="connected-content" hidden>
+          <section id="view-pools" aria-label="线程池列表">
+            <form id="pool-query" class="query-bar">
+              <label
+                >线程池名称
+                <input
+                  name="name"
+                  placeholder="请输入线程池名称"
+                  autocomplete="off" /></label
+              ><label
+                >拒绝策略
+                <select name="policy">
+                  <option value="">全部</option>
+                  <option>ABORT</option>
+                  <option>CALLER_RUNS</option>
+                </select></label
+              ><button class="primary" type="submit">查询</button
+              ><button class="secondary" type="reset">重置</button>
+            </form>
+            <div class="table-toolbar">
+              <p>查询到 <strong id="pool-result-count">0</strong> 个线程池。</p>
+              <button class="secondary refresh-data">刷新</button>
+            </div>
+            <div
+              class="table-wrap"
+              tabindex="0"
+              role="region"
+              aria-label="线程池数据表，可横向滚动"
+            >
+              <table class="data-table pool-table">
+                <thead>
+                  <tr>
+                    <th scope="col">线程池名称</th>
+                    <th scope="col">状态</th>
+                    <th scope="col">核心 / 最大</th>
+                    <th scope="col">活跃 / 实际</th>
+                    <th scope="col">队列占用</th>
+                    <th scope="col">完成任务</th>
+                    <th scope="col">失败 / 拒绝</th>
+                    <th scope="col">P95 等待 / 执行</th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="pool-list"></tbody>
+              </table>
+            </div>
+            <div id="pool-pagination" class="pagination"></div>
+          </section>
+          <section id="view-monitors" aria-label="运行监控" hidden>
+            <div class="query-bar">
+              <label
+                >线程池名称
+                <select id="monitor-pool"></select></label
+              ><button class="secondary refresh-data">刷新</button>
+            </div>
+            <div id="monitor-content"></div>
+            <p class="table-note">
+              每 2 秒采样。P95 / P99 基于最近 256 个完成样本，包含已观测取消。
+            </p>
+          </section>
+          <section id="view-alerts" aria-label="告警记录" hidden>
+            <form id="alert-query" class="query-bar">
+              <label
+                >线程池名称
+                <select name="pool" id="alert-pool">
+                  <option value="">全部</option>
+                </select></label
+              ><label
+                >告警类型
+                <select name="kind">
+                  <option value="">全部</option>
+                  <option value="ACTIVITY">线程繁忙</option>
+                  <option value="QUEUE">队列压力</option>
+                  <option value="REJECTION">拒绝处理</option>
+                  <option value="SLOW_TASK">慢任务</option>
+                  <option value="QUEUE_TIMEOUT">排队超时</option>
+                  <option value="RUN_TIMEOUT">运行超时</option>
+                </select></label
+              ><button class="primary" type="submit">查询</button
+              ><button class="secondary" type="reset">重置</button>
+            </form>
+            <div class="table-toolbar">
+              <p>
+                查询到 <strong id="alert-result-count">0</strong> 条告警记录。
+              </p>
+              <span class="muted">当前实例最多保留 200 条</span>
+            </div>
+            <div
+              class="table-wrap"
+              tabindex="0"
+              role="region"
+              aria-label="告警数据表，可横向滚动"
+            >
+              <table class="data-table event-table">
+                <thead>
+                  <tr>
+                    <th scope="col">时间</th>
+                    <th scope="col">线程池名称</th>
+                    <th scope="col">告警类型</th>
+                    <th scope="col">告警内容</th>
+                    <th scope="col">配置版本</th>
+                  </tr>
+                </thead>
+                <tbody id="alert-list"></tbody>
+              </table>
+            </div>
+            <div id="alert-pagination" class="pagination"></div>
+          </section>
+          <section id="view-changes" aria-label="配置变更" hidden>
+            <form id="change-query" class="query-bar">
+              <label
+                >线程池名称
+                <input
+                  name="pool"
+                  placeholder="请输入线程池名称"
+                  autocomplete="off" /></label
+              ><button class="primary" type="submit">查询</button
+              ><button class="secondary" type="reset">重置</button>
+            </form>
+            <div class="table-toolbar">
+              <p>
+                查询到 <strong id="change-result-count">0</strong> 条变更记录。
+              </p>
+              <span class="muted">当前实例最多保留 200 条</span>
+            </div>
+            <div
+              class="table-wrap"
+              tabindex="0"
+              role="region"
+              aria-label="配置变更数据表，可横向滚动"
+            >
+              <table class="data-table change-table">
+                <thead>
+                  <tr>
+                    <th scope="col">时间</th>
+                    <th scope="col">线程池名称</th>
+                    <th scope="col">版本</th>
+                    <th scope="col">操作人</th>
+                    <th scope="col">变更原因</th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="change-list"></tbody>
+              </table>
+            </div>
+            <div id="change-pagination" class="pagination"></div>
+          </section>
+          <section id="view-load" aria-label="负载测试" hidden>
+            <p class="tool-description">
+              向演示应用提交指定负载，查看线程池的排队、失败和拒绝情况。
+            </p>
+            <div class="load-form">
+              <label
+                >目标线程池
+                <select id="load-pool"></select
+              ></label>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table load-table">
+                <thead>
+                  <tr>
+                    <th scope="col">负载类型</th>
+                    <th scope="col">任务数</th>
+                    <th scope="col">单任务耗时</th>
+                    <th scope="col">失败设置</th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>平稳负载</td>
+                    <td>12</td>
+                    <td>120 ms</td>
+                    <td>无</td>
+                    <td>
+                      <button class="link-button load" data-profile="steady">
+                        提交平稳负载
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>队列拥堵</td>
+                    <td>100</td>
+                    <td>800 ms</td>
+                    <td>无</td>
+                    <td>
+                      <button class="link-button load" data-profile="burst">
+                        提交队列拥堵
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>部分失败</td>
+                    <td>24</td>
+                    <td>200 ms</td>
+                    <td>每 3 个任务失败 1 个</td>
+                    <td>
+                      <button class="link-button load" data-profile="failure">
+                        提交部分失败
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>慢任务</td>
+                    <td>16</td>
+                    <td>1100 ms</td>
+                    <td>无</td>
+                    <td>
+                      <button class="link-button load" data-profile="slow">
+                        提交慢任务
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="table-note">
+              仅演示应用提供此接口，最多 200 个任务，单任务最长 2 秒，仅支持
+              ABORT。已拒绝任务不会自动重试。
+            </p>
+            <div
+              id="load-result"
+              class="load-result"
+              role="status"
+              hidden
+            ></div>
+            <button class="secondary" id="load-monitor" type="button">
+              查看运行监控
+            </button>
+          </section>
+          <footer>
+            采样间隔：2 秒<span>指标为运行快照</span
+            ><span>队列缩容保留已排队任务</span>
+          </footer>
+        </div>
+      </div>
+    </main>
+    <dialog
+      id="login-dialog"
+      class="login-dialog"
+      aria-labelledby="login-title"
+    >
+      <form id="login-form">
+        <div class="dialog-heading">
+          <h2 id="login-title">连接管理台</h2>
+          <select class="language-picker" aria-label="界面语言">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="dialog-body">
+          <div id="token-fields" hidden>
+            <p class="login-intro">
+              管理令牌是访问管理接口的密钥，用于保护监控数据和调参操作。
+            </p>
+            <label
+              >管理令牌<input
+                id="token"
+                type="password"
+                required
+                autocomplete="off"
+                placeholder="请输入管理令牌"
+            /></label>
+            <p class="hint">令牌仅保存在当前页面内存中，由应用部署者配置。</p>
+          </div>
+          <p id="application-login-hint" class="login-intro" hidden>
+            沿用业务应用当前的登录身份，需要具有线程池管理权限。
+          </p>
+          <p id="login-error" class="form-error" role="alert"></p>
+        </div>
+        <div class="dialog-actions">
+          <button id="login-submit" class="primary" type="submit" disabled>
+            连接管理台
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="settings-dialog" aria-labelledby="config-title">
+      <form id="settings-form">
+        <div class="dialog-heading">
+          <h2 id="config-title">编辑线程池</h2>
+          <select class="language-picker" aria-label="界面语言">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+          <button
+            class="close-button"
+            type="button"
+            id="close-settings"
+            aria-label="关闭"
+          >
+            ×
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div id="config-version" class="config-context"></div>
+          <div class="form-grid">
+            <label
+              >核心线程数<input
+                name="coreSize"
+                type="number"
+                min="0"
+                max="1024"
+                required /></label
+            ><label
+              >最大线程数<input
+                name="maxSize"
+                type="number"
+                min="1"
+                max="1024"
+                required /></label
+            ><label
+              >队列容量<input
+                name="queueCapacity"
+                type="number"
+                min="1"
+                max="1000000"
+                required /></label
+            ><label
+              >空闲存活时间（秒）<input
+                name="keepAliveSeconds"
+                type="number"
+                min="0"
+                max="86400"
+                required /></label
+            ><label
+              >慢任务阈值（毫秒）<input
+                name="slowTaskMillis"
+                type="number"
+                min="1"
+                max="86400000"
+                required /></label
+            ><label
+              >拒绝策略<select name="rejectionPolicy">
+                <option value="ABORT">ABORT</option>
+                <option value="CALLER_RUNS">CALLER_RUNS</option>
+              </select></label
+            >
+          </div>
+          <label class="check"
+            ><input
+              name="allowCoreTimeout"
+              type="checkbox"
+            />允许核心线程空闲超时</label
+          >
+          <p class="hint">
+            缩容保留已排队任务。CALLER_RUNS 会占用提交任务的线程。
+          </p>
+          <label
+            >变更原因<textarea
+              name="reason"
+              maxlength="200"
+              required
+              placeholder="请输入变更原因"
+            ></textarea>
+          </label>
+          <p id="config-error" class="form-error" role="alert"></p>
+        </div>
+        <div class="dialog-actions">
+          <button class="secondary" type="button" id="refresh-settings">
+            读取最新配置</button
+          ><button class="primary" type="submit">保存并生效</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog
+      id="detail-dialog"
+      class="detail-dialog"
+      aria-labelledby="detail-title"
+    >
+      <div class="dialog-heading">
+        <h2 id="detail-title">变更详情</h2>
+        <select class="language-picker" aria-label="界面语言">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+        <button id="close-detail" class="close-button" aria-label="关闭详情">
+          ×
+        </button>
+      </div>
+      <div id="detail-content" class="dialog-body"></div>
+      <div class="dialog-actions">
+        <button id="rollback-change" class="primary">回滚本次变更</button>
+        <button id="dismiss-detail" class="secondary">关闭</button>
+      </div>
+    </dialog>
+    <dialog
+      id="rollback-dialog"
+      class="detail-dialog"
+      aria-labelledby="rollback-title"
+    >
+      <form id="rollback-form">
+        <div class="dialog-heading">
+          <h2 id="rollback-title">回滚配置</h2>
+          <select class="language-picker" aria-label="界面语言">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+          <button
+            type="button"
+            id="close-rollback"
+            class="close-button"
+            aria-label="关闭"
+          >
+            ×
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div id="rollback-version" class="config-context"></div>
+          <p class="hint">
+            恢复到所选变更之前的完整配置，可能覆盖后续调参。回滚会产生新的版本和记录。
+          </p>
+          <div id="rollback-preview"></div>
+          <label
+            >变更原因<textarea
+              name="rollbackReason"
+              maxlength="200"
+              required
+              placeholder="请输入变更原因"
+            ></textarea>
+          </label>
+          <p id="rollback-error" class="form-error" role="alert"></p>
+        </div>
+        <div class="dialog-actions">
+          <button id="refresh-rollback" type="button" class="secondary">
+            读取最新配置
+          </button>
+          <button type="submit" class="primary">确认回滚</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
